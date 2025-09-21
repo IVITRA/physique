@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مختبر التحدي الفيزيائي</title>
+    <style>
+        /* --- الإعدادات العامة --- */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #111;
+            color: #eee;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- حاوية اللعبة الرئيسية --- */
+        #game-container {
+            width: 800px;
+            height: 600px;
+            border: 2px solid #444;
+            position: relative;
+            background-color: #000;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
+            cursor: none;
+        }
+
+        /* --- الشاشات المختلفة --- */
+        .screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 100;
+            transition: opacity 0.5s;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .screen.hidden { opacity: 0; pointer-events: none; }
+        .screen h1 { font-size: 48px; margin-bottom: 20px; color: #00bfff; }
+        .screen h2 { font-size: 32px; margin-bottom: 30px; color: #eee; }
+        .screen p { font-size: 20px; max-width: 600px; line-height: 1.6; }
+        .screen button {
+            font-family: 'Cairo', sans-serif;
+            font-size: 22px;
+            padding: 15px 30px;
+            margin-top: 30px;
+            cursor: pointer;
+            background-color: #00bfff;
+            border: none;
+            color: #111;
+            border-radius: 8px;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .screen button:hover { transform: scale(1.05); background-color: #33cfff; }
+        
+        /* --- شاشة الأسئلة --- */
+        #options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; max-width: 600px; }
+        .option-btn { font-size: 20px; padding: 20px; margin: 0 !important; background-color: #34495e; color: #ecf0f1; border: 2px solid #7f8c8d; }
+        .option-btn:hover { background-color: #4a627a; }
+        .option-btn.correct { background-color: #27ae60 !important; }
+        .option-btn.incorrect { background-color: #c0392b !important; }
+        #kc-feedback { margin-top: 20px; font-size: 22px; height: 30px; }
+
+        #message { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 20px; color: #fff; background-color: rgba(0, 0, 0, 0.5); padding: 10px 0; z-index: 50; transition: color 0.3s; }
+
+        /* --- تحدي العربة --- */
+        #challenge-cart-screen { background-color: #2c3e50; }
+        #track { position: absolute; bottom: 150px; left: 5%; width: 90%; height: 10px; background-color: #7f8c8d; }
+        #cart { position: absolute; width: 80px; height: 50px; background-color: #e74c3c; bottom: 160px; border-radius: 5px; box-sizing: border-box; border: 2px solid #c0392b; z-index: 10; }
+        #cart.inactive { cursor: pointer !important; border-color: #f1c40f; box-shadow: 0 0 15px #f1c40f; }
+        #wall { position: absolute; width: 20px; height: 150px; background-color: rgba(173, 216, 230, 0.5); border: 2px solid #add8e6; bottom: 160px; right: 50px; transition: all 0.2s; }
+        #force-indicator { position: absolute; height: 20px; bottom: 185px; background: linear-gradient(to right, rgba(255, 200, 0, 0.8), rgba(255, 100, 0, 0.9)); border-radius: 10px; box-shadow: 0 0 15px rgba(255, 150, 0, 0.7); transition: width 0.1s linear; z-index: 9; }
+        #mouse-cursor { position: absolute; width: 20px; height: 20px; border: 2px solid #00bfff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 200; }
+        
+        /* --- تحدي سرعة الضوء --- */
+        #challenge-light-screen { background-color: #000; justify-content: space-between; }
+        #celestial-bodies { position: relative; width: 100%; height: 200px; margin: 20px 0; }
+        #earth, #mars { position: absolute; top: 50%; transform: translateY(-50%); font-size: 80px; }
+        #earth { left: 50px; } #mars { right: 50px; }
+        #rocket, #light-beam { position: absolute; top: 50%; left: 140px; transform: translateY(-50%); }
+        #rocket { font-size: 40px; } #light-beam { width: 0; height: 5px; background: white; box-shadow: 0 0 15px white; }
+        #light-choices { display: flex; gap: 20px; }
+        @keyframes travel-rocket { from { left: 140px; } to { left: 620px; } }
+        @keyframes travel-light { from { width: 0; } to { width: 480px; } }
+
+        /* --- تحدي قانون أوم --- */
+        #challenge-ohm-screen { background-color: #1a1a2e; justify-content: flex-start; padding-top: 50px; overflow-y: auto; }
+        #circuit-board { width: 80%; }
+        #microchip { font-size: 100px; transition: text-shadow 0.3s, color 0.3s; color: #555; }
+        #ohm-controls { width: 80%; max-width: 500px; padding-bottom: 50px; }
+        .slider-group { margin: 25px 0; }
+        .slider-group label { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-size: 20px; }
+        .slider-group input { width: 100%; }
+        #current-display { font-size: 24px; margin-top: 20px; color: #e0e0e0; height: 30px; font-weight: bold; }
+        
+        /* --- تحدي التردد (الجديد) --- */
+        #challenge-frequency-screen { background-color: #0d0d1a; justify-content: space-evenly; }
+        .wave-canvas { background-color: #000; border: 1px solid #333; }
+        #freq-controls { width: 80%; max-width: 500px; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- مؤشر الفأرة المخصص -->
+        <div id="mouse-cursor" class="hidden"></div>
+        
+        <!-- الشاشات -->
+        <div id="intro-screen" class="screen"><h1>مختبر التحدي الفيزيائي</h1><p>أكمل كل تحدٍ عملي، ثم أجب عن سؤال نظري لتثبت فهمك وتنتقل للمرحلة التالية.</p><button id="start-btn">ابدأ التحدي</button></div>
+        <div id="knowledge-check-screen" class="screen hidden"><h2 id="kc-question"></h2><div id="options-container"></div><p id="kc-feedback"></p></div>
+        <div id="transition-screen" class="screen hidden"><h2>أحسنت!</h2><p id="transition-message"></p><button id="continue-btn">انتقل للتحدي التالي</button></div>
+        <div id="challenge-cart-screen" class="screen hidden"><div id="track"></div><div id="cart"></div><div id="wall"></div><div id="force-indicator"></div><div id="message"></div></div>
+        <div id="challenge-light-screen" class="screen hidden"><div id="light-scenario"><h2>تحدي الاتصالات الفضائية</h2><p>أرسل رسالة عاجلة من الأرض إلى المريخ. اختر أسرع وسيلة!</p></div><div id="celestial-bodies"><div id="earth">🌍</div><div id="rocket" class="hidden">🚀</div><div id="light-beam" class="hidden"></div><div id="mars">🛰️</div></div><div id="light-choices"><button data-choice="sound">موجة صوتية</button><button data-choice="rocket">صاروخ فائق السرعة</button><button data-choice="light">نبضة ضوئية</button></div><div id="message"></div></div>
+        <div id="challenge-ohm-screen" class="screen hidden"><div id="circuit-board"><h2>تحدي الدائرة الكهربائية</h2><div id="microchip">💡</div><p>شغل المصباح بأمان. النطاق الآمن للتيار: 2.0 - 3.0 أمبير</p><div id="current-display">التيار الحالي: 0.00 أمبير</div></div><div id="ohm-controls"><div class="slider-group"><label>الجهد (فولت): <span id="voltage-value">10</span>V</label><input type="range" id="voltage-slider" min="1" max="20" value="10"></div><div class="slider-group"><label>المقاومة (أوم): <span id="resistance-value">2</span>Ω</label><input type="range" id="resistance-slider" min="1" max="10" value="2"></div></div><div id="message"></div></div>
+        <div id="challenge-frequency-screen" class="screen hidden"><h2>تحدي مزامنة الإشارة</h2><p>طابق تردد موجتك مع الإشارة المستهدفة.</p><canvas id="target-wave-canvas" class="wave-canvas" width="600" height="100"></canvas><canvas id="user-wave-canvas" class="wave-canvas" width="600" height="100"></canvas><div id="freq-controls"><div class="slider-group"><label>التردد: <span id="freq-value">5</span> Hz</label><input type="range" id="freq-slider" min="1" max="10" value="5" step="0.1"></div></div><div id="message"></div></div>
+        <div id="end-screen" class="screen hidden"><h1>أحسنت صنعاً!</h1><p>لقد أثبتت فهمك لمفاهيم الفيزياء الأساسية!</p><button id="restart-btn">العب مرة أخرى</button></div>
+    </div>
+
+    <script>
+        const introScreen = document.getElementById('intro-screen'), endScreen = document.getElementById('end-screen'),
+              knowledgeCheckScreen = document.getElementById('knowledge-check-screen'),
+              transitionScreen = document.getElementById('transition-screen'),
+              startBtn = document.getElementById('start-btn'), restartBtn = document.getElementById('restart-btn'),
+              continueBtn = document.getElementById('continue-btn'),
+              challengeCartScreen = document.getElementById('challenge-cart-screen'),
+              challengeLightScreen = document.getElementById('challenge-light-screen'),
+              challengeOhmScreen = document.getElementById('challenge-ohm-screen'),
+              challengeFrequencyScreen = document.getElementById('challenge-frequency-screen');
+
+        const kcQuestion = document.getElementById('kc-question'), kcOptionsContainer = document.getElementById('options-container'), kcFeedback = document.getElementById('kc-feedback');
+        
+        let activeChallenge = 0, gameLoopId, nextChallengeAction;
+
+        const knowledgeChecks = [
+            { question: "ما هي وحدة قياس القوة في النظام الدولي (SI)؟", options: ["الجول (Joule)", "الواط (Watt)", "النيوتن (Newton)", "الكيلوجرام (Kilogram)"], correctAnswerIndex: 2, nextAction: () => showTransitionScreen("المرحلة التالية: تحدي الطاقة!", () => setupCartChallenge(2)) },
+            { question: "ما هي وحدة قياس الطاقة؟", options: ["الأوم (Ohm)", "الجول (Joule)", "الفولت (Volt)", "النيوتن (Newton)"], correctAnswerIndex: 1, nextAction: () => showTransitionScreen("المرحلة التالية: تحدي سرعة الضوء!", setupLightChallenge) },
+            { question: "ما هي سرعة الضوء في الفراغ (تقريباً)؟", options: ["340 م/ث", "3000 كم/ساعة", "300 مليون م/ث", "100 ألف كم/ث"], correctAnswerIndex: 2, nextAction: () => showTransitionScreen("المرحلة التالية: تحدي قانون أوم!", setupOhmChallenge) },
+            { question: "ما هو قانون أوم؟", options: ["الجهد = التيار / المقاومة", "الجهد = التيار × المقاومة", "التيار = الجهد × المقاومة", "المقاومة = الجهد × التيار"], correctAnswerIndex: 1, nextAction: () => showTransitionScreen("المرحلة الأخيرة: تحدي التردد!", setupFrequencyChallenge) },
+            { question: "ما هي وحدة قياس التردد؟", options: ["الفاراد (Farad)", "الهرتز (Hertz)", "الديسيبل (Decibel)", "الفولت (Volt)"], correctAnswerIndex: 1, nextAction: () => showScreen(endScreen) }
+        ];
+
+        function showScreen(screen) { document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden')); screen.classList.remove('hidden'); }
+        
+        function showTransitionScreen(message, nextAction) { document.getElementById('transition-message').textContent = message; nextChallengeAction = nextAction; showScreen(transitionScreen); }
+
+        function showKnowledgeCheck(checkIndex) {
+            const checkData = knowledgeChecks[checkIndex];
+            kcQuestion.textContent = checkData.question; kcOptionsContainer.innerHTML = ''; kcFeedback.textContent = '';
+            checkData.options.forEach((optionText, index) => {
+                const button = document.createElement('button'); button.textContent = optionText;
+                button.classList.add('option-btn');
+                button.onclick = () => handleAnswer(index, checkData.correctAnswerIndex, checkData.nextAction);
+                kcOptionsContainer.appendChild(button);
+            });
+            showScreen(knowledgeCheckScreen);
+        }
+
+        function handleAnswer(selectedIndex, correctIndex, nextAction) {
+            const buttons = kcOptionsContainer.querySelectorAll('.option-btn');
+            if (selectedIndex === correctIndex) {
+                buttons[selectedIndex].classList.add('correct');
+                kcFeedback.textContent = 'إجابة صحيحة!'; kcFeedback.style.color = '#2ecc71';
+                buttons.forEach(btn => btn.disabled = true);
+                setTimeout(() => nextAction(), 1500);
+            } else {
+                buttons[selectedIndex].classList.add('incorrect');
+                kcFeedback.textContent = 'حاول مرة أخرى...'; kcFeedback.style.color = '#e74c3c';
+                buttons[selectedIndex].disabled = true;
+            }
+        }
+        
+        const cart = document.getElementById('cart'), wall = document.getElementById('wall'),
+              cartMessageEl = document.querySelector('#challenge-cart-screen #message'),
+              forceIndicator = document.getElementById('force-indicator');
+        let cartState = {}; const FRICTION = 0.995; let cartChallengeOver = false, wallBreakSpeed, appliedForce = 0, cartIsActive = false;
+
+        function setupCartChallenge(part) {
+            activeChallenge = part; cartChallengeOver = false; cartIsActive = false;
+            cartState = { x: 50, vx: 0 }; appliedForce = 0;
+            cart.classList.add('inactive'); cart.style.left = '50px';
+            wall.style.backgroundColor = 'rgba(173, 216, 230, 0.5)'; wall.style.boxShadow = 'none';
+            if (part === 1) { cartMessageEl.textContent = 'انقر على العربة لتفعيلها، ثم حرك الفأرة أمامها لدفعها.'; wallBreakSpeed = 2.0; wall.style.borderWidth = '2px'; }
+            else if (part === 2) { cartMessageEl.textContent = 'انقر على العربة لتفعيلها. الحائط أقوى الآن، اكسره!'; wallBreakSpeed = 4.0; wall.style.borderWidth = '6px'; }
+            cartMessageEl.style.color = '#fff'; updateCartChallenge(); showScreen(challengeCartScreen);
+        }
+
+        function updateCartChallenge() {
+            if (cartChallengeOver || !cartIsActive) return;
+            const acceleration = appliedForce; cartState.vx += acceleration; cartState.vx *= FRICTION; cartState.x += cartState.vx;
+            if (cartState.x < 50) { cartState.x = 50; cartState.vx = 0; }
+            cart.style.left = cartState.x + 'px'; forceIndicator.style.right = (800 - cartState.x) + 'px';
+            const wallPosition = wall.offsetLeft;
+            if (cartState.x + cart.offsetWidth > wallPosition) {
+                cartState.x = wallPosition - cart.offsetWidth;
+                if (activeChallenge === 1) { if (cartState.vx > wallBreakSpeed) loseChallenge(1); else winChallenge(1); }
+                else if (activeChallenge === 2) { if (cartState.vx > wallBreakSpeed) winChallenge(2); else loseChallenge(2); }
+            }
+        }
+        cart.addEventListener('click', () => { if (!cartChallengeOver) { cartIsActive = true; cart.classList.remove('inactive'); cartMessageEl.textContent = 'ممتاز! الآن حرك الفأرة أمامها.'; } });
+        challengeCartScreen.addEventListener('mousemove', (e) => {
+            if (cartChallengeOver || !cartIsActive) return;
+            const rect = challengeCartScreen.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const cartFront = cartState.x + cart.offsetWidth;
+            if (mouseX > cartFront) { const distance = mouseX - cartFront; appliedForce = Math.min(distance / 500, 0.1); forceIndicator.style.width = Math.min(distance, 150) + 'px'; }
+            else { appliedForce = 0; forceIndicator.style.width = '0px'; }
+        });
+        challengeCartScreen.addEventListener('mouseleave', () => { appliedForce = 0; forceIndicator.style.width = '0px'; });
+        
+        const lightMessageEl = document.querySelector('#challenge-light-screen #message'), rocket = document.getElementById('rocket'), lightBeam = document.getElementById('light-beam');
+        function setupLightChallenge() { activeChallenge = 3; lightMessageEl.textContent = ''; document.querySelectorAll('#light-choices button').forEach(b => b.disabled = false); rocket.classList.add('hidden'); rocket.style.animation = 'none'; lightBeam.classList.add('hidden'); lightBeam.style.animation = 'none'; showScreen(challengeLightScreen); }
+        document.querySelectorAll('#light-choices button').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const choice = e.target.dataset.choice;
+                document.querySelectorAll('#light-choices button').forEach(b => b.disabled = true);
+                if (choice === 'sound') { loseChallenge(3, 'فشل! الصوت لا ينتقل في فراغ الفضاء.'); }
+                else if (choice === 'rocket') { rocket.classList.remove('hidden'); rocket.style.animation = 'travel-rocket 5s linear forwards'; loseChallenge(3, 'بطيء جدًا...'); }
+                else if (choice === 'light') { lightBeam.classList.remove('hidden'); lightBeam.style.animation = 'travel-light 0.2s linear forwards'; winChallenge(3); }
+            });
+        });
+        
+        const microchip = document.getElementById('microchip'), currentDisplay = document.getElementById('current-display'),
+              voltageSlider = document.getElementById('voltage-slider'), resistanceSlider = document.getElementById('resistance-slider'),
+              voltageValueSpan = document.getElementById('voltage-value'), resistanceValueSpan = document.getElementById('resistance-value'),
+              ohmMessageEl = document.querySelector('#challenge-ohm-screen #message');
+        const SAFE_CURRENT_MIN = 2.0, SAFE_CURRENT_MAX = 3.0; let ohmChallengeOver = false;
+        function setupOhmChallenge() { activeChallenge = 4; ohmChallengeOver = false; voltageSlider.value = 10; resistanceSlider.value = 2; voltageSlider.disabled = false; resistanceSlider.disabled = false; ohmMessageEl.textContent = ''; updateOhmChallenge(); showScreen(challengeOhmScreen); }
+        function updateOhmChallenge() {
+            if (ohmChallengeOver) return;
+            const voltage = voltageSlider.value; const resistance = resistanceSlider.value;
+            voltageValueSpan.textContent = voltage; resistanceValueSpan.textContent = resistance;
+            const current = voltage / resistance;
+            currentDisplay.textContent = `التيار الحالي: ${current.toFixed(2)} أمبير`;
+            if (current > SAFE_CURRENT_MAX) { microchip.style.color = '#e74c3c'; microchip.style.textShadow = '0 0 20px #c0392b'; }
+            else if (current < SAFE_CURRENT_MIN) { microchip.style.color = '#7f8c8d'; microchip.style.textShadow = 'none'; }
+            else { winChallenge(4, 'safe'); }
+        }
+        voltageSlider.addEventListener('input', updateOhmChallenge);
+        resistanceSlider.addEventListener('input', updateOhmChallenge);
+
+        const targetCanvas = document.getElementById('target-wave-canvas'), userCanvas = document.getElementById('user-wave-canvas'),
+              freqSlider = document.getElementById('freq-slider'), freqValueSpan = document.getElementById('freq-value'),
+              freqMessageEl = document.querySelector('#challenge-frequency-screen #message');
+        let targetFreq, userFreq, phase = 0, freqChallengeOver = false;
+        function setupFrequencyChallenge() {
+            activeChallenge = 5; freqChallengeOver = false;
+            targetFreq = (Math.floor(Math.random() * 6) + 3).toFixed(1); // تردد عشوائي بين 3.0 و 8.0
+            freqSlider.value = 5;
+            freqMessageEl.textContent = '';
+            showScreen(challengeFrequencyScreen);
+        }
+        function updateFrequencyChallenge() {
+            if (freqChallengeOver) return;
+            userFreq = parseFloat(freqSlider.value);
+            freqValueSpan.textContent = userFreq.toFixed(1);
+            phase += 0.05;
+            drawWave(targetCanvas, targetFreq, '#00bfff');
+            let userColor = '#e74c3c';
+            if (Math.abs(userFreq - targetFreq) < 0.2) {
+                userColor = '#2ecc71'; winChallenge(5);
+            } else if (Math.abs(userFreq - targetFreq) < 1.0) {
+                userColor = '#f1c40f';
+            }
+            drawWave(userCanvas, userFreq, userColor);
+        }
+        function drawWave(canvas, freq, color) {
+            const ctx = canvas.getContext('2d'), width = canvas.width, height = canvas.height, amp = 40;
+            ctx.clearRect(0, 0, width, height);
+            ctx.beginPath();
+            ctx.lineWidth = 3; ctx.strokeStyle = color;
+            for (let x = 0; x < width; x++) {
+                const y = height / 2 + amp * Math.sin((x * freq / 100) + phase);
+                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        function winChallenge(part, status = '') {
+            cancelAnimationFrame(gameLoopId);
+            if (part === 1) { cartChallengeOver = true; cartMessageEl.textContent = 'تحكم دقيق! نجحت.'; cartMessageEl.style.color = '#2ecc71'; setTimeout(() => showKnowledgeCheck(0), 1500); }
+            else if (part === 2) { cartChallengeOver = true; wall.style.backgroundColor = '#27ae60'; cartMessageEl.textContent = 'قوة كافية! لقد حطمت الحائط.'; cartMessageEl.style.color = '#2ecc71'; setTimeout(() => showKnowledgeCheck(1), 1500); }
+            else if (part === 3) { lightMessageEl.textContent = 'الخيار الأمثل! الضوء هو أسرع شيء في الكون.'; lightMessageEl.style.color = '#2ecc71'; setTimeout(() => showKnowledgeCheck(2), 1500); }
+            else if (part === 4 && status === 'safe') { ohmChallengeOver = true; voltageSlider.disabled = true; resistanceSlider.disabled = true; microchip.style.color = '#2ecc71'; microchip.style.textShadow = '0 0 20px #27ae60'; ohmMessageEl.textContent = 'تشغيل آمن! لقد نجحت.'; ohmMessageEl.style.color = '#2ecc71'; setTimeout(() => showKnowledgeCheck(3), 2000); }
+            else if (part === 5) { freqChallengeOver = true; freqMessageEl.textContent = 'تمت المزامنة بنجاح!'; freqMessageEl.style.color = '#2ecc71'; setTimeout(() => showKnowledgeCheck(4), 1500); }
+        }
+
+        function loseChallenge(part, customMessage = '') {
+            cancelAnimationFrame(gameLoopId);
+            if (part === 1) { cartChallengeOver = true; wall.style.backgroundColor = 'red'; wall.style.boxShadow = '0 0 20px red'; cartMessageEl.textContent = 'تحطم!'; setTimeout(() => setupCartChallenge(1), 2500); }
+            else if (part === 2) { cartChallengeOver = true; cartMessageEl.textContent = 'لم تكن السرعة كافية!'; setTimeout(() => setupCartChallenge(2), 2500); }
+            else if (part === 3) { lightMessageEl.textContent = customMessage; lightMessageEl.style.color = '#e74c3c'; setTimeout(() => setupLightChallenge(), 4000); }
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+        
+        function gameLoop() {
+            if (activeChallenge === 1 || activeChallenge === 2) updateCartChallenge();
+            if (activeChallenge === 5) updateFrequencyChallenge();
+            gameLoopId = requestAnimationFrame(gameLoop);
+        }
+        
+        const mouseCursor = document.getElementById('mouse-cursor');
+        document.addEventListener('mousemove', (e) => { const rect = document.getElementById('game-container').getBoundingClientRect(); mouseCursor.style.left = (e.clientX - rect.left) + 'px'; mouseCursor.style.top = (e.clientY - rect.top) + 'px'; });
+        document.getElementById('game-container').addEventListener('mouseenter', () => mouseCursor.classList.remove('hidden'));
+        document.getElementById('game-container').addEventListener('mouseleave', () => mouseCursor.classList.add('hidden'));
+
+        startBtn.addEventListener('click', () => { setupCartChallenge(1); gameLoopId = requestAnimationFrame(gameLoop); });
+        restartBtn.addEventListener('click', () => showScreen(introScreen));
+        continueBtn.addEventListener('click', () => { if (nextChallengeAction) { cancelAnimationFrame(gameLoopId); nextChallengeAction(); gameLoopId = requestAnimationFrame(gameLoop); } });
+    </script>
+</body>
+</html>
