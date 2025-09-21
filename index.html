@@ -106,7 +106,7 @@
         .slider-group input { width: 100%; }
         #current-display { font-size: 24px; margin-top: 20px; color: #e0e0e0; height: 30px; font-weight: bold; }
         
-        /* --- تحدي التردد (الجديد) --- */
+        /* --- تحدي التردد --- */
         #challenge-frequency-screen { background-color: #0d0d1a; justify-content: space-evenly; }
         .wave-canvas { background-color: #000; border: 1px solid #333; }
         #freq-controls { width: 80%; max-width: 500px; }
@@ -255,8 +255,11 @@
         let targetFreq, userFreq, phase = 0, freqChallengeOver = false;
         function setupFrequencyChallenge() {
             activeChallenge = 5; freqChallengeOver = false;
-            targetFreq = (Math.floor(Math.random() * 6) + 3).toFixed(1); // تردد عشوائي بين 3.0 و 8.0
-            freqSlider.value = 5;
+            const startFreq = 5.0;
+            do {
+                targetFreq = (Math.floor(Math.random() * 70) / 10 + 2).toFixed(1);
+            } while (Math.abs(targetFreq - startFreq) < 1.5);
+            freqSlider.value = startFreq;
             freqMessageEl.textContent = '';
             showScreen(challengeFrequencyScreen);
         }
@@ -266,23 +269,26 @@
             freqValueSpan.textContent = userFreq.toFixed(1);
             phase += 0.05;
             drawWave(targetCanvas, targetFreq, '#00bfff');
-            let userColor = '#e74c3c';
-            if (Math.abs(userFreq - targetFreq) < 0.2) {
-                userColor = '#2ecc71'; winChallenge(5);
-            } else if (Math.abs(userFreq - targetFreq) < 1.0) {
-                userColor = '#f1c40f';
+            
+            // <<< === التدرج اللوني المُعاد والمُحسّن هنا ===
+            let userColor;
+            const difference = Math.abs(userFreq - targetFreq);
+
+            if (difference < 0.2) {
+                userColor = '#2ecc71'; // أخضر (فوز)
+                winChallenge(5);
+            } else if (difference < 1.0) {
+                userColor = '#f1c40f'; // أصفر (قريب)
+            } else {
+                userColor = '#e74c3c'; // أحمر (بعيد)
             }
             drawWave(userCanvas, userFreq, userColor);
         }
         function drawWave(canvas, freq, color) {
             const ctx = canvas.getContext('2d'), width = canvas.width, height = canvas.height, amp = 40;
             ctx.clearRect(0, 0, width, height);
-            ctx.beginPath();
-            ctx.lineWidth = 3; ctx.strokeStyle = color;
-            for (let x = 0; x < width; x++) {
-                const y = height / 2 + amp * Math.sin((x * freq / 100) + phase);
-                if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-            }
+            ctx.beginPath(); ctx.lineWidth = 3; ctx.strokeStyle = color;
+            for (let x = 0; x < width; x++) { const y = height / 2 + amp * Math.sin((x * freq / 100) + phase); if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
             ctx.stroke();
         }
 
