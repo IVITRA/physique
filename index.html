@@ -200,7 +200,7 @@
             { question: "ما هو قانون الجاذبية العام لنيوتن؟", options: ["F = G &middot; (m<sub>1</sub>m<sub>2</sub>) / r<sup>2</sup>", "F = G &middot; (m<sub>1</sub> + m<sub>2</sub>) / r<sup>2</sup>", "F = G &middot; (m<sub>1</sub>m<sub>2</sub>) &middot; r<sup>2</sup>", "F = G &middot; r<sup>2</sup> / (m<sub>1</sub>m<sub>2</sub>)"], correctAnswerIndex: 0, nextAction: () => showTransitionScreen("المرحلة التالية: تحدي سرعة الضوء!", setupLightChallenge) },
             { question: "ما هي سرعة الضوء في الفراغ (تقريباً)؟", options: ["340 م/ث", "3000 كم/ساعة", "300 مليون م/ث", "100 ألف كم/ث"], correctAnswerIndex: 2, nextAction: () => showTransitionScreen("المرحلة التالية: تحدي المقاومة!", setupResistanceChallenge) },
             { question: "ما هي وحدة قياس المقاومة الكهربائية؟", options: ["الأمبير (Ampere)", "الواط (Watt)", "الأوم (Ohm)", "الفولت (Volt)"], correctAnswerIndex: 2, nextAction: () => showTransitionScreen("المرحلة التالية: تحدي قانون أوم!", setupOhmChallenge) },
-            { question: "ما هو قانون أوم؟", options: ["V = IR", "P = VI", "E = hf", "F = ma"], correctAnswerIndex: 1, nextAction: () => showTransitionScreen("المرحلة الأخيرة: تحدي التردد!", setupFrequencyChallenge) },
+            { question: "ما هو قانون أوم؟", options:  ["الجهد = التيار / المقاومة", "الجهد = التيار × المقاومة", "التيار = الجهد × المقاومة", "المقاومة = الجهد × التيار"], correctAnswerIndex: 1, nextAction: () => showTransitionScreen("المرحلة الأخيرة: تحدي التردد!", setupFrequencyChallenge) },
             { question: "ما هي وحدة قياس التردد؟", options: ["الفاراد (Farad)", "الهرتز (Hertz)", "الديسيبل (Decibel)", "الفولت (Volt)"], correctAnswerIndex: 1, nextAction: () => showScreen(endScreen) }
         ];
 
